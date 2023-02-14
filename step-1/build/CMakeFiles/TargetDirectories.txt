@@ -1,0 +1,10 @@
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/step-1.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/run.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/debug.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/release.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/runclean.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/distclean.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/strip_comments.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/info.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/edit_cache.dir
+/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build/CMakeFiles/rebuild_cache.dir

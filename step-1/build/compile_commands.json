@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/build",
+  "command": "/usr/bin/g++ -DBOOST_NO_AUTO_PTR -DDEBUG -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -isystem /usr/include/trilinos -isystem /usr/include/hdf5/openmpi -isystem /usr/include/scotch -isystem /usr/include/suitesparse -isystem /usr/include/petsc -isystem /usr/include/opencascade -isystem /usr/include/slepc -pedantic -fPIC -Wall -Wextra -Wmissing-braces -Woverloaded-virtual -Wpointer-arith -Wsign-compare -Wswitch -Wsynth -Wwrite-strings -Wno-placement-new -Wno-literal-suffix -Wno-psabi -Wno-class-memaccess -g -O2 -ffile-prefix-map=/build/deal.ii-XzgvdC/deal.ii-9.4.0=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -Wno-nonnull-compare -Wno-address -Wno-unused-local-typedefs -O0 -ggdb -Wa,--compress-debug-sections -o CMakeFiles/step-1.dir/step-1.cc.o -c /home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/step-1.cc",
+  "file": "/home/quang/Documents/dealii_dev/dealii-9.4.1/examples/step-1/step-1.cc"
+}
+]
