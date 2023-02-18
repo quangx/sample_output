@@ -123,7 +123,7 @@ int main(){
   srand(time(NULL));
   file_generator(100,100,100,"data.txt");
   std::ifstream myFile("data.txt");
-  Table<3,double> t=table_generator(100,100,100,myFile);
+  Table<3,double> t=table_generator(90,100,100,myFile);
   to_vtk(t,"image.vti");
   std::cout<<t[1][2][3];
 

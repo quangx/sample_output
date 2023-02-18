@@ -1,0 +1,3 @@
+/home/quang/Documents/sample_output/writer/CMakeFiles/writer.dir
+/home/quang/Documents/sample_output/writer/CMakeFiles/edit_cache.dir
+/home/quang/Documents/sample_output/writer/CMakeFiles/rebuild_cache.dir

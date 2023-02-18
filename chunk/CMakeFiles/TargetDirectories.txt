@@ -1,0 +1,4 @@
+/home/quang/Documents/sample_output/chunk/CMakeFiles/write.dir
+/home/quang/Documents/sample_output/chunk/CMakeFiles/load.dir
+/home/quang/Documents/sample_output/chunk/CMakeFiles/edit_cache.dir
+/home/quang/Documents/sample_output/chunk/CMakeFiles/rebuild_cache.dir
