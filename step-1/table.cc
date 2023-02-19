@@ -38,22 +38,36 @@
 // This is needed for C++ output:
 #include <iostream>
 #include <fstream>
-// And this for the declarations of the `std::sqrt` and `std::fabs` functions:
 #include <cmath>
 #include <random>
-// The final step in importing deal.II is this: All deal.II functions and
-// classes are in a namespace <code>dealii</code>, to make sure they don't
-// clash with symbols from other libraries you may want to use in conjunction
-// with deal.II. One could use these functions and classes by prefixing every
-// use of these names by <code>dealii::</code>, but that would quickly become
-// cumbersome and annoying. Rather, we simply import the entire deal.II
-// namespace for general use:
+
 using namespace dealii;
 
-// @sect3{Creating the first mesh}
+enum class DataInterpretation{T,U,V
+};
+std::string to_string(DataInterpretation& d){
+  switch(d){
+    case DataInterpretation::T:
+      return "T";
+    case DataInterpretation::U:
+      return "U";
+    case DataInterpretation::V:
+      return "V";
 
-// In the following, first function, we simply use the unit square as domain
-// and produce a globally refined grid from it.
+  }
+}
+std::ostream& operator<<(std::ostream& stm, DataInterpretation& d){
+  switch(d){
+    case DataInterpretation::T:
+      return stm<<"T";
+    case DataInterpretation::U:
+      return stm<<"U";
+    case DataInterpretation::V:
+      return stm<<"V";
+
+  }
+}
+
 void file_generator(int size1, int size2, int size3,std::string name){
   double lower_bound=1;
   double upper_bound=100;
@@ -83,37 +97,59 @@ Table<3,double> table_generator(const int n1,const int n2, const int n3, std::if
       }
     }
   }
+
+  // testing indexing
+ 
+  // for(int y=0;y<n2;y++){
+  //   for(int x=0;x<n1;x++){
+  //     t[x][0][0]=t[x][0][0]+t[0][y][0];
+  //   }
+  // }
+    // for(int i=0;i<n1;++i){
+    //   t[i][0][0]=5*t[i][0][0]+5*t[0][i][0];
+    // }
+   
+
+    
   return t;
 }
 
 
-void to_vtk(Table<3,double> t,std::string name){
+void to_vtk(Table<3,double> &t, Point<3,int> min,
+Point<3,int> max,const std::string filename,
+std::vector<DataInterpretation> component_name){
   TableIndices<3> dim=t.size();
   int n1=dim[0];
   int n2=dim[1];
   int n3=dim[2];
   std::ofstream file;
-  file.open(name);
+  file.open(filename);
   file<<"<VTKFile type=\"ImageData\" "
   "byte_order=\"LittleEndian\"> \n \t"
-  "<ImageData WholeExtent=\"0 " +std::to_string(dim[0]-1)+
-  " 0 "+std::to_string(dim[1]-1)+" 0 "+std::to_string(dim[2]-1)
-  +"\" Origin=\"0 0 0\" Spacing=\".1 .1 .1\">"
-  "\n\t <Piece Extent=\"0 "+std::to_string(dim[0]-1)+
-  " 0 "+std::to_string(dim[1]-1)+" 0 "+std::to_string(dim[2]-1)+"\">"
+  "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
+  " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
+  "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">"
+  "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
+  ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
+  "\n\t<PointData scalars=\"T\">";
+  for(int i=0;i<component_name.size();++i){
+    file<<"\n\t <DataArray Name=\""+to_string(component_name[i])+"\" type=\"Float32\" format=\"ascii\">\n";
 
-  "\n\t<PointData scalars=\"T\">"
-  "\n\t <DataArray Name=\"T\" type=\"Float32\" format=\"ascii\">";
+    for(int z=0;z<n3;z++){
 
-  for(int z=0;z<n3;z++){
-
-    for(int y=0;y<n2;y++){
-      for (int x=0;x<n1;x++){
-        file<<std::to_string(t[x][y][z])+" ";
+      for(int y=0;y<n2;y++){
+        for (int x=0;x<n1;x++){
+          file<<std::to_string(t[x][y][z])+" ";
+        }
+        file<<"\n";
       }
+      file<< "\n";
     }
+  
+  file<<"</DataArray> \n ";
   }
-  file<<"</DataArray> \n </PointData> \n "
+
+  file<<"</PointData> \n "
   "<CellData> </CellData> \n"
   "</Piece> \n </ImageData> \n </VTKFile>";
 
@@ -121,10 +157,11 @@ void to_vtk(Table<3,double> t,std::string name){
 }
 int main(){
   srand(time(NULL));
-  file_generator(100,100,100,"data.txt");
+  file_generator(10,9,8,"data.txt");
   std::ifstream myFile("data.txt");
-  Table<3,double> t=table_generator(90,100,100,myFile);
-  to_vtk(t,"image.vti");
-  std::cout<<t[1][2][3];
+  Table<3,double> t=table_generator(10,9,8,myFile);
+  std::vector<DataInterpretation> v{DataInterpretation::V,DataInterpretation::U};
+  to_vtk(t,Point<3,int>(0,0,0),Point<3,int>(9,8,7),"image.vti",v);
+  
 
 }
