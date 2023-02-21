@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& stm, DataInterpretation& d){
 
   }
 }
-
+// generates data file to read in to table
 void file_generator(int size1, int size2, int size3,std::string name){
   double lower_bound=1;
   double upper_bound=100;
@@ -114,7 +114,6 @@ Table<3,double> table_generator(const int n1,const int n2, const int n3, std::if
   return t;
 }
 
-
 void to_vtk(Table<3,double> &t, Point<3,int> min,
 Point<3,int> max,const std::string filename,
 std::vector<DataInterpretation> component_name){
@@ -122,13 +121,18 @@ std::vector<DataInterpretation> component_name){
   int n1=dim[0];
   int n2=dim[1];
   int n3=dim[2];
+  std::vector<double> spacing;
+  for(int i=0;i<3;++i){
+    spacing.push_back((double)(max[i]-min[i])/(double)(dim[i]-1));
+    std::cout<<std::to_string(spacing[i]);
+  }
   std::ofstream file;
   file.open(filename);
   file<<"<VTKFile type=\"ImageData\" "
   "byte_order=\"LittleEndian\"> \n \t"
   "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
   " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
-  "\" Origin=\"0 0 0\" Spacing=\"1 1 1\">"
+  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\""
   "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
   ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
   "\n\t<PointData scalars=\"T\">";
@@ -159,7 +163,7 @@ int main(){
   srand(time(NULL));
   file_generator(10,9,8,"data.txt");
   std::ifstream myFile("data.txt");
-  Table<3,double> t=table_generator(10,9,8,myFile);
+  Table<3,double> t=table_generator(91,81,71,myFile);
   std::vector<DataInterpretation> v{DataInterpretation::V,DataInterpretation::U};
   to_vtk(t,Point<3,int>(0,0,0),Point<3,int>(9,8,7),"image.vti",v);
   
