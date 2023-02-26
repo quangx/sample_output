@@ -43,31 +43,51 @@
 
 using namespace dealii;
 
-enum class DataInterpretation{T,U,V
+enum class DataInterpretation{
+  compoenent_is_scalar,component_is_vector
 };
 std::string to_string(DataInterpretation& d){
   switch(d){
-    case DataInterpretation::T:
-      return "T";
-    case DataInterpretation::U:
-      return "U";
-    case DataInterpretation::V:
-      return "V";
+    case DataInterpretation::compoenent_is_scalar:
+      return "Scalar";
+    case DataInterpretation::component_is_vector:
+      return "Vector";
+    
 
   }
 }
 std::ostream& operator<<(std::ostream& stm, DataInterpretation& d){
   switch(d){
-    case DataInterpretation::T:
-      return stm<<"T";
-    case DataInterpretation::U:
-      return stm<<"U";
-    case DataInterpretation::V:
-      return stm<<"V";
+    case DataInterpretation::compoenent_is_scalar:
+      return stm<<"Scalar";
+    case DataInterpretation::component_is_vector:
+      return stm<<"Vector";
+    
 
   }
 }
 // generates data file to read in to table
+// void file_generator(int size1, int size2, int size3,std::string name){
+//   double lower_bound=1;
+//   double upper_bound=100;
+  
+
+//   std::ofstream file;
+//   file.open(name);
+//   for(int z=0;z<size3;++z){
+
+//     for(int y=0;y<size2;++y){
+//       for(int x=0;x<size1;++x){
+//           file<<std::to_string((double)rand()/RAND_MAX*(upper_bound-lower_bound)+lower_bound)+" ";
+//       }
+//       file<<"\n";
+//     }
+//     file<<"\n";
+//   }
+// }
+
+
+//testing indexing
 void file_generator(int size1, int size2, int size3,std::string name){
   double lower_bound=1;
   double upper_bound=100;
@@ -75,16 +95,40 @@ void file_generator(int size1, int size2, int size3,std::string name){
 
   std::ofstream file;
   file.open(name);
-  for(int z=0;z<size3;++z){
+  
+    for(int z=0;z<size3;++z){
 
-    for(int y=0;y<size2;++y){
-      for(int x=0;x<size1;++x){
-          file<<std::to_string((double)rand()/RAND_MAX*(upper_bound-lower_bound)+lower_bound)+" ";
+      for(int y=0;y<size2;++y){
+        for(int x=0;x<size1;++x){
+            int t=5*y+5*z;
+            file<<std::to_string(t)+" ";
+        }
+        file<<"\n";
       }
       file<<"\n";
     }
-    file<<"\n";
+  
+}
+void vector_file_generator(int size1,int size2,int size3,std::string name){
+  double lower_bound=1;
+  double upper_bound=100;
+  std::ofstream file;
+  file.open(name);
+  for(int i=0;i<4;++i){
+    for(int z=0;z<size3;++z){
+      for(int y=0;y<size1;++y){
+        for(int x=0;x<size1;++x){
+
+            file<<std::to_string((double)rand()/RAND_MAX*(upper_bound-lower_bound)+lower_bound)+" ";
+          
+          file<<"\n";
+        }
+        file<<"\n";
+      }
+      file<<"\n";
+    }
   }
+
 }
 Table<3,double> table_generator(const int n1,const int n2, const int n3, std::ifstream& myFile){
   Table<3,double> t(n1,n2,n3);
@@ -98,59 +142,93 @@ Table<3,double> table_generator(const int n1,const int n2, const int n3, std::if
     }
   }
 
-  // testing indexing
- 
-  // for(int y=0;y<n2;y++){
-  //   for(int x=0;x<n1;x++){
-  //     t[x][0][0]=t[x][0][0]+t[0][y][0];
-  //   }
-  // }
-    // for(int i=0;i<n1;++i){
-    //   t[i][0][0]=5*t[i][0][0]+5*t[0][i][0];
-    // }
-   
-
     
   return t;
 }
-
-void to_vtk(Table<3,double> &t, Point<3,int> min,
-Point<3,int> max,const std::string filename,
-std::vector<DataInterpretation> component_name){
-  TableIndices<3> dim=t.size();
-  int n1=dim[0];
-  int n2=dim[1];
-  int n3=dim[2];
-  std::vector<double> spacing;
-  for(int i=0;i<3;++i){
-    spacing.push_back((double)(max[i]-min[i])/(double)(dim[i]-1));
-    std::cout<<std::to_string(spacing[i]);
+Table<4,double> table_generator(std::vector<int> dims,std::ifstream& myFile,std::vector<DataInterpretation> types){   
+  Table<4,double> tab(dims[0],dims[1],dims[2],4);
+  for(int i=0;i<4;++i){
+    for(int z=0;z<dims[2];++z){
+      for(int y=0;y<dims[1];++y){
+        for(int x=0;x<dims[0];++x){
+          double d;
+          myFile>>d;
+          tab[x][y][z][i]=d;
+        }
+      }
+    }
   }
+  return tab;
+}
+void to_vtk(Table<4,double> &t,const Point<3,int> min,
+const Point<3,int> max,const std::string filename,
+std::vector<DataInterpretation> component_type,const std::vector<std::string> names){
+  int n1;
+  int n2;
+  int n3;
+  std::vector<double> spacing;
+  TableIndices<4> table_dim=t.size();
+  
+  n1=table_dim[0];
+  n2=table_dim[1];
+  n3=table_dim[2];
+  for(int i=0;i<3;++i){
+    spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]-1));
+  }
+  
+  // else if(dim==3){
+  //   TableIndices<3> table_dim=t.size();
+  //   n1=table_dim[0];
+  //   n2=table_dim[1];
+  //   n3=table_dim[2];
+    
+  //   for(int i=0;i<3;++i){
+  //     spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]-1));
+  //   }
+  // }
+  
   std::ofstream file;
   file.open(filename);
   file<<"<VTKFile type=\"ImageData\" "
   "byte_order=\"LittleEndian\"> \n \t"
   "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
   " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
-  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\""
+  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\">"
   "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
   ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
-  "\n\t<PointData scalars=\"T\">";
-  for(int i=0;i<component_name.size();++i){
-    file<<"\n\t <DataArray Name=\""+to_string(component_name[i])+"\" type=\"Float32\" format=\"ascii\">\n";
+  "\n\t<PointData Scalars=\"T\">";
+  for(int i=0;i<component_type.size();++i){
+    file<<"\n\t <DataArray type=\"Float32\" Name=\""+names[i]+"\" ";
+    if(component_type[i]==DataInterpretation::component_is_vector){
+      file<<" NumberOfComponents=\"3\" ";
 
-    for(int z=0;z<n3;z++){
-
-      for(int y=0;y<n2;y++){
-        for (int x=0;x<n1;x++){
-          file<<std::to_string(t[x][y][z])+" ";
-        }
-        file<<"\n";
-      }
-      file<< "\n";
     }
+    file<<"format=\"ascii\">\n";
+    if(component_type[i]==DataInterpretation::component_is_vector){
+      for(int z=0;z<n3;++z){
+        for(int y=0;y<n2;++y){
+          for(int x=0;x<n1;++x){
+            for(int j=0;j<3;++j){
+              file<<std::to_string(t[x][y][z][i+j])+" ";
+            }
+          }
+        }
+      }
+      i=i+2;
+    }
+    else{
+      for(int z=0;z<n3;++z){
+        for(int y=0;y<n2;++y){
+          for(int x=0;x<n1;++x){
+            file<<std::to_string(t[x][y][z][i])+" ";
+          }
+        }
+      }
+    }
+   
+   
   
-  file<<"</DataArray> \n ";
+    file<<"</DataArray> \n ";
   }
 
   file<<"</PointData> \n "
@@ -161,11 +239,18 @@ std::vector<DataInterpretation> component_name){
 }
 int main(){
   srand(time(NULL));
-  file_generator(10,9,8,"data.txt");
-  std::ifstream myFile("data.txt");
-  Table<3,double> t=table_generator(91,81,71,myFile);
-  std::vector<DataInterpretation> v{DataInterpretation::V,DataInterpretation::U};
-  to_vtk(t,Point<3,int>(0,0,0),Point<3,int>(9,8,7),"image.vti",v);
-  
+  // file_generator(10,9,8,"data.txt"); //make sure dimensino matches t
+  // std::ifstream myFile("data.txt");
+  // Table<3,double> t=table_generator(10,9,8,myFile);
+  vector_file_generator(10,9,8,"vector_data.txt");
+  std::ifstream myFile("vector_data.txt");
+  std::vector<int> dims{10,9,8};
+  std::vector<DataInterpretation> types{DataInterpretation::component_is_vector,DataInterpretation::component_is_vector
+  ,DataInterpretation::component_is_vector,DataInterpretation::compoenent_is_scalar
+  };
+  Table<4,double> t=table_generator(dims,myFile,types);
+
+  std::vector<std::string> names{"velocity","y_velocity","z_velocity","viscosity"};
+  to_vtk(t,Point<3,int>(0,0,0),Point<3,int>(9,8,7),"vector_test.vti",types,names);
 
 }
