@@ -237,6 +237,77 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
 
 
 }
+
+void to_vtk_cell(Table<4,double> &t,const Point<3,int> min,
+const Point<3,int> max,const std::string filename,
+std::vector<DataInterpretation> component_type,const std::vector<std::string> names){
+  int n1;
+  int n2;
+  int n3;
+  std::vector<double> spacing;
+  TableIndices<4> table_dim=t.size();
+  
+  n1=table_dim[0];
+  n2=table_dim[1];
+  n3=table_dim[2];
+  for(int i=0;i<3;++i){
+    spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]));
+  }
+  
+ 
+  std::ofstream file;
+  file.open(filename);
+  file<<"<VTKFile type=\"ImageData\" "
+  "byte_order=\"LittleEndian\"> \n \t"
+  "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
+  " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
+  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\">"
+  "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
+  ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
+  "\n\t<PointData Scalars=\"T\">";
+  
+
+  file<<"</PointData> \n "
+  "<CellData>";
+  for(int i=0;i<component_type.size();++i){
+    file<<"\n\t <DataArray type=\"Float32\" Name=\""+names[i]+"\" ";
+    if(component_type[i]==DataInterpretation::component_is_vector){
+      file<<" NumberOfComponents=\"3\" ";
+
+    }
+    file<<"format=\"ascii\">\n";
+    if(component_type[i]==DataInterpretation::component_is_vector){
+      for(int z=0;z<n3;++z){
+        for(int y=0;y<n2;++y){
+          for(int x=0;x<n1;++x){
+            for(int j=0;j<3;++j){
+              file<<std::to_string(t[x][y][z][i+j])+" ";
+            }
+          }
+        }
+      }
+      i=i+2;
+    }
+    else{
+      for(int z=0;z<n3;++z){
+        for(int y=0;y<n2;++y){
+          for(int x=0;x<n1;++x){
+            file<<std::to_string(t[x][y][z][i])+" ";
+          }
+        }
+      }
+    }
+   
+   
+  
+    file<<"</DataArray> \n ";
+  }
+
+  file<<"</CellData> \n"
+  "</Piece> \n </ImageData> \n </VTKFile>";
+
+
+}
 int main(){
   srand(time(NULL));
   // file_generator(10,9,8,"data.txt"); //make sure dimensino matches t
