@@ -210,7 +210,7 @@ void vector_file_generator(int size1,int size2,int size3,std::string name,int nu
   file.open(name);
   for(int i=0;i<num_types;++i){   // depends on how many components you want to pass in
     for(int z=0;z<size3;++z){
-      for(int y=0;y<size1;++y){
+      for(int y=0;y<size2;++y){
         for(int x=0;x<size1;++x){
 
             file<<std::to_string((double)rand()/RAND_MAX*(upper_bound-lower_bound)+lower_bound)+" ";
@@ -270,7 +270,6 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
 
   for(int i=0;i<3;++i){
     spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]-1));
-    std::cout<<spacing[i];
   }
   
   
@@ -278,14 +277,14 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
   std::ofstream file;
   file.open(filename);
   file<<"<VTKFile type=\"ImageData\" "
-  "byte_order=\"LittleEndian\"> \n \t"
+  "byte_order=\"LittleEndian\" header_type=\"UInt64\"> \n \t"
   "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
   " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
-  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\">"
+  "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\" Direction=\"1 0 0 0 1 0 0 0 1\">"
   "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
   ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
   "\n\t<PointData Scalars=\"T\">";
-  for(int i=0;i<component_type.size();++i){
+  for(unsigned int i=0;i<component_type.size();++i){
     file<<"\n\t <DataArray type=\"Float32\" Name=\""+names[i]+"\" ";
     if(component_type[i]==DataInterpretation::component_is_vector){
       file<<" NumberOfComponents=\"3\" ";
@@ -294,23 +293,30 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
     file<<"format=\"ascii\">\n";
     if(component_type[i]==DataInterpretation::component_is_vector){
       for(int z=0;z<n3;++z){
+        file<<"\t";
         for(int y=0;y<n2;++y){
           for(int x=0;x<n1;++x){
             for(int j=0;j<3;++j){
               file<<std::to_string(t[x][y][z][i+j])+" ";
             }
+            file<<"\n\t";
           }
+          file<<"\n\t";
         }
+        file<<"\n";
       }
       i=i+2;
     }
     else{
       for(int z=0;z<n3;++z){
+        file<<"\t";
         for(int y=0;y<n2;++y){
           for(int x=0;x<n1;++x){
             file<<std::to_string(t[x][y][z][i])+" ";
           }
+          file<<"\n\t";
         }
+        file<<"\n";
       }
     }
    
@@ -358,7 +364,7 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
 
   file<<"</PointData> \n "
   "<CellData>";
-  for(int i=0;i<component_type.size();++i){
+  for(unsigned int i=0;i<component_type.size();++i){
     file<<"\n\t <DataArray type=\"Float32\" Name=\""+names[i]+"\" ";
     if(component_type[i]==DataInterpretation::component_is_vector){
       file<<" NumberOfComponents=\"3\" ";
@@ -404,11 +410,11 @@ int main(){
   Point<3,int> p1(0,0,0);
   Point<3,int> p2(9,8,7);
   std::vector<int> dims{19,17,15};
-  std::vector<DataInterpretation> types{DataInterpretation::component_is_vector,DataInterpretation::component_is_vector,DataInterpretation::component_is_vector};
+  std::vector<DataInterpretation> types{DataInterpretation::component_is_scalar};
   vector_file_generator(19,17,15,"large_sample.txt",types.size());
   std::ifstream myFile("large_sample.txt");
   Table<4,double> t=table_generator(dims,myFile,types);
-  std::vector<std::string> names{"x1","x2,","x3"};
+  std::vector<std::string> names{"x1"};
   to_vtk(t,p1,p2,"large_sample.vti",types,names);
   // std::vector<int> dims{19,17,15};
   // Point<3,int> p1(0,0,0);
