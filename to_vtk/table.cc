@@ -54,15 +54,17 @@ struct StructuredData{
     std::array<unsigned int,3> num_values;
 
 
-    StructuredData(Table<4,double> &d, const Point<3,int> &min,const Point<3,int> &max,const std::array<double,3> &spacing){
-        data=d;
+    StructuredData(const Point<3,int> &min,const Point<3,int> &max,const std::array<double,3> &spacing,const int num_components){
+
         this->min=min;
         this->max=max;
         this->spacing=spacing;
         for(int i=0;i<3;++i){
-          // num_values[i]=((max[i]-min[i])/spacing[i])+1;
-          num_values[i]=max[i]+1;
+          num_values[i]=((max[i]-min[i])/spacing[i])+1;
+          // num_values[i]=max[i]+1;
         }
+        TableIndices<4> t_ind(num_values[0],num_values[1],num_values[2],num_components);
+        data.reinit(t_ind);
         priorities.reinit(num_values[0],num_values[1],num_values[2]);
 
         // priorities(num_values[0],num_values[1],num_values[2]);
@@ -161,28 +163,7 @@ std::ostream& operator<<(std::ostream& stm, DataInterpretation& d){
 
   }
 }
-// generates data file to read in to table
-// void file_generator(int size1, int size2, int size3,std::string name){
-//   double lower_bound=1;
-//   double upper_bound=100;
-  
 
-//   std::ofstream file;
-//   file.open(name);
-//   for(int z=0;z<size3;++z){
-
-//     for(int y=0;y<size2;++y){
-//       for(int x=0;x<size1;++x){
-//           file<<std::to_string((double)rand()/RAND_MAX*(upper_bound-lower_bound)+lower_bound)+" ";
-//       }
-//       file<<"\n";
-//     }
-//     file<<"\n";
-//   }
-// }
-
-
-//testing indexing
 void file_generator(int size1, int size2, int size3,std::string name){
   double lower_bound=1;
   double upper_bound=100;
@@ -258,20 +239,20 @@ Table<4,double> table_generator(std::vector<int> dims,std::ifstream& myFile,std:
 }
 void to_vtk(Table<4,double> &t,const Point<3,int> min,
 const Point<3,int> max,const std::string filename,
-std::vector<DataInterpretation> component_type,const std::vector<std::string> names,std::array<double,3> &spacing){
+std::vector<DataInterpretation> component_type,const std::vector<std::string> names){
   int n1;
   int n2;
   int n3;
-  // std::vector<double> spacing;
+  std::vector<double> spacing;
   TableIndices<4> table_dim=t.size();
   
   n1=table_dim[0];
   n2=table_dim[1];
   n3=table_dim[2];
-
-  // for(int i=0;i<3;++i){
-  //   spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]-1));
-  // }
+  
+  for(int i=0;i<3;++i){
+    spacing.push_back((double)(max[i]-min[i])/(double)(table_dim[i]-1));
+  }
   
   
   
@@ -279,11 +260,11 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
   file.open(filename);
   file<<"<VTKFile type=\"ImageData\" "
   "byte_order=\"LittleEndian\" header_type=\"UInt64\"> \n \t"
-  "<ImageData WholeExtent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+""
-  " "+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+""
+  "<ImageData WholeExtent=\""+std::to_string(0)+" "+std::to_string(n1-1)+""
+  " "+std::to_string(0)+" "+std::to_string(n2-1)+" "+std::to_string(0)+" "+std::to_string(n3-1)+""
   "\" Origin=\"0 0 0\" Spacing=\""+std::to_string(spacing[0])+" "+std::to_string(spacing[1])+" "+std::to_string(spacing[2])+"\" Direction=\"1 0 0 0 1 0 0 0 1\">"
-  "\n\t <Piece Extent=\""+std::to_string(min[0])+" "+std::to_string(max[0])+" "
-  ""+std::to_string(min[1])+" "+std::to_string(max[1])+" "+std::to_string(min[2])+" "+std::to_string(max[2])+"\">"
+  "\n\t <Piece Extent=\""+std::to_string(0)+" "+std::to_string(n1-1)+" "
+  ""+std::to_string(0)+" "+std::to_string(n2-1)+" "+std::to_string(0)+" "+std::to_string(n3-1)+"\">"
   "\n\t<PointData Scalars=\"T\">";
   for(unsigned int i=0;i<component_type.size();++i){
     file<<"\n\t <DataArray type=\"Float32\" Name=\""+names[i]+"\" ";
@@ -404,66 +385,68 @@ std::vector<DataInterpretation> component_type,const std::vector<std::string> na
 
 
 }
-
+Table<4,double> file_to_table(std::ifstream & myFile){
+  
+}
 
 int main(){
   srand(time(NULL));
   Point<3,int> p1(0,0,0);
-  Point<3,int> p2(18,16,14);;
+  Point<3,int> p2(9,8,7);
   std::vector<int> dims{19,17,15};
-  std::vector<DataInterpretation> types{DataInterpretation::component_is_vector,DataInterpretation::component_is_vector
-  ,DataInterpretation::component_is_vector,DataInterpretation::component_is_scalar,DataInterpretation::component_is_vector,
-  DataInterpretation::component_is_vector,DataInterpretation::component_is_vector
-  };
-  std::vector<std::string> names{"x_velocity","y_velocity","z_velocity","viscosity","mu1","mu2","mu3"};
-
-  vector_file_generator(19,17,15,"large_sample.txt",types.size());
-  std::ifstream myFile("large_sample.txt");
-  Table<4,double> t_large=table_generator(dims,myFile,types);
-  std::array<double,3> spacing{.5,.5,.5};
-  to_vtk(t_large,p1,p2,"large_sample.vti",types,names,spacing);
-  Point<3,int> ps1(0,0,0);
-  Point<3,int> ps2(9,8,7);
+  
+  std::vector<DataInterpretation> components{DataInterpretation::component_is_scalar,DataInterpretation::component_is_vector,
+  DataInterpretation::component_is_vector,DataInterpretation::component_is_vector};
+  std::vector<std::string> names{"mu"};
+  // vector_file_generator(19,17,15,"retest.txt",components.size());
+  std::ifstream myFile("retest.txt");
+  // to_vtk(T,p1,p2,"retest.vti",components,names);
+  std::vector<Point<3,double>> pts;
+  std::vector<double> data;
+  std::ifstream corner;
+  corner.open("corners.txt");
+  while(!corner.eof()){
+    double a;
+    corner>> a;
+    double b;
+    corner>>b;
+    double c;
+    corner>> c;
+    double d;
+    corner>>d;
+    Point<3,double> temp(a,b,c);
+    pts.push_back(temp);
+    data.push_back(d);
+  }
+  StructuredData s(p1,p2,{.5,.5,.5},1);
+  for(int i=0;i<pts.size();++i){
+    std::vector<double> temp;
+    temp.push_back(data[i]);
+    s.splat(pts[i],temp,2);
+  }
+  Table<4,double> T=s.data;
+  
  
-  // vector_file_generator(19,17,15,"large_sample.txt",types.size());
-  // std::ifstream myFile("large_sample.txt");
-  vector_file_generator(10,9,8,"small_sample.txt",types.size());
-  std::ifstream myFile2("small_sample.txt");
-  std::vector<int> dims2{10,9,8};
-  Table<4,double> t_small=table_generator(dims2,myFile2,types);
-  std::array<double,3> spacing_small{1,1,1};
-  to_vtk(t_small,ps1,ps2,"small_sample.vti",types,names,spacing_small);
-  // std::vector<int> num_dir{19,17,15};
-  // std::array<double,3> spacing_large{.5,.5,.5};
-  // std::array<double,3> spacing_small{1,1,1};
-  StructuredData large(t_large,p1,p2,spacing);
-  StructuredData small(t_small,ps1,ps2,spacing_small);
-  Point<3,double> k(1,1.5,2);
-  std::array<unsigned int,3> idx=large.location_to_index(k);
-  for(int i=0;i<3;++i){
-    std::cout<<std::to_string(idx[i])+" ";
-  }
-  TableIndices<4> small_size=t_small.size();
-  unsigned int n1=small_size[0];
-  unsigned int n2=small_size[1];
-  unsigned int n3=small_size[2];
-  unsigned int n4=small_size[3];
+  // Table<4,double> T=s.data;
+  to_vtk(T,p1,p2,"sample2.vti",{DataInterpretation::component_is_scalar},{"mu"});
 
-  for(unsigned int z=0;z<n3;++z){
-    for(unsigned int y=0;y<n2;++y){
-      for(unsigned int x=0;x<n1;++x){
-        std::vector<double> data;
-        std::array<unsigned int,3> idx{x,y,z};
-        for(unsigned int i=0;i<n4;++i){
-          data.push_back(t_small[x][y][z][i]);
-        }
-        Point<3,double> p_temp=small.index_to_location(idx);
+  
 
-        large.splat(p_temp,data,2);
-      }
-    }
-  }
-  to_vtk(t_large,Point<3,int>(0,0,0),p2,"complete_sample.vti",types,names,spacing);
+  // for(unsigned int z=0;z<n3;++z){
+  //   for(unsigned int y=0;y<n2;++y){
+  //     for(unsigned int x=0;x<n1;++x){
+  //       std::vector<double> data;
+  //       std::array<unsigned int,3> idx{x,y,z};
+  //       for(unsigned int i=0;i<n4;++i){
+  //         data.push_back(t_small[x][y][z][i]);
+  //       }
+  //       Point<3,double> p_temp=small.index_to_location(idx);
+
+  //       large.splat(p_temp,data,2);
+  //     }
+  //   }
+  // }
+
 
 
   
