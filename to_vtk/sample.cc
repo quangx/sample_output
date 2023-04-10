@@ -66,9 +66,9 @@ public:
 
 void
 sample(const std::string &myFile,const std::string &outputName,
-Point<3,int> &p1,Point<3,int> &p2,std::array<unsigned int,3> pts_dir,
-unsigned int num_components,std::vector<DataInterpretation> datatypes,
-std::vector<std::string> names)
+const Point<3,int> &p1,const Point<3,int> &p2,const std::array<unsigned int,3> &pts_dir,
+unsigned int &num_components,const std::vector<DataInterpretation> &datatypes,
+const std::vector<std::string> &names)
 {
   // Read the data back in and dump it into the deallog:
   std::ifstream in(myFile);
@@ -85,14 +85,19 @@ std::vector<std::string> names)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-  Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  Point<3,int> p1(0,0,0);
-  Point<3,int> p2(9,8,7);
-  std::array<unsigned int,3> pts_dir{10,9,8};
-  const std::string infile="test.pd2";
-  const std::string outfile="sample6.vti";
+  // Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  AssertDimension(argc,12);
+  std::string infile=argv[1];
+  std::string outfile=argv[2];
+  int a=std::stoi(argv[3]);
+  std::cout<<infile;
+  std::cout<<a;
+  Point<3,int> p1(std::stoi(argv[3]),std::stoi(argv[5]),std::stoi(argv[7]));
+  Point<3,int> p2(std::stoi(argv[4]),std::stoi(argv[6]),std::stoi(argv[8]));
+  std::array<unsigned int,3> pts_dir{std::stoi(argv[9]),std::stoi(argv[10]),std::stoi(argv[11])};
+  
   unsigned  int num_components=1;
   const std::vector<DataInterpretation> d{DataInterpretation::component_is_scalar};
   const std::vector<std::string> names{"mu"};
