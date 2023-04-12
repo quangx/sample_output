@@ -55,13 +55,18 @@ class MyReader: public DataOutReader<dim,dim>
       
       for(int i=0;i<num_components;++i){
         processed[i]=false;
-      }
+      }//need to sort names
+      int count=0;
       for(int i=0;i<v.size();++i){   //mark indices as processed
         unsigned int idx1=std::get<0>(v[i]);
         unsigned int idx2=std::get<1>(v[i]);
         for(int j=idx1;j<=idx2;++j){
+          std::string temp=names[count];
+          names[count]=names[j];
+          names[j]=temp;
           processed[j]=true;
           datatypes.push_back(DataInterpretation::component_is_vector);
+          ++count;
         }
       }
       // for(int i=0;i<v.size();++i){
@@ -87,21 +92,19 @@ class MyReader: public DataOutReader<dim,dim>
       for (const auto & patch: this->get_patches()){
         for(unsigned int k=0;k<patch.vertices.size();++k){ //8 vertices in 3d
           Point<3,double> vertex=patch.vertices[k];
-          std::vector<double> data; // not efficient change this
-          for(int i=0;i<num_components;++i){
-            data.push_back(0);
-          }
+          std::vector<double> data;
+          
           for(int i=0;i<v.size();++i){
            unsigned int idx1=std::get<0>(v[i]);
            unsigned int idx2=std::get<1>(v[i]);
            for(unsigned int j=idx1;j<=idx2;++j){
-              data[j]=(patch.data(j,k));
+              data.push_back(patch.data(j,k));
 
             }
           }
           for(unsigned int i=0;i<patch.data.n_rows();++i){
             if(!processed[i]){
-              data[i]=(patch.data(i,k));
+              data.push_back(patch.data(i,k));
             }
           }
           structured_data.splat(vertex,data,3);
