@@ -42,49 +42,66 @@ class MyReader: public DataOutReader<dim,dim>
   public:
       std::vector<DataInterpretation> datatypes;
       std::vector<std::string> names;
-    
+      
     StructuredData write_to_vertex(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_pts)
     {
       
       std::vector v=this->get_nonscalar_data_ranges();
       names=this->get_dataset_names();
       unsigned int num_components=names.size();
-      std::cout<<"number of names is: "+std::to_string(names.size())+"\n";
       StructuredData structured_data(min,max,num_pts,num_components);
       bool processed[num_components];
+      
+      
       for(int i=0;i<num_components;++i){
         processed[i]=false;
       }
-      for(int i=0;i<v.size();++i){
-        std::tuple<unsigned int,unsigned int,
-        std::string,DataComponentInterpretation::DataComponentInterpretation> v_i=v[i];
-        unsigned int idx1=std::get<0>(v_i);
-        unsigned int idx2=std::get<1>(v_i);
-        std::string name=std::get<2>(v_i);
-        for(const auto &patch: this->get_patches()){
-          for(unsigned int k=0;k<patch.vertices.size();++k){
-            Point<3,double> vertex=patch.vertices[k];
-            std::vector<double> data;
-            for(unsigned int j=idx1;j<=idx2;++j){
-              data.push_back(patch.data(j,k));
-
-            }
-            structured_data.splat(vertex,data,3);
-          }
-        }
+      for(int i=0;i<v.size();++i){   //mark indices as processed
+        unsigned int idx1=std::get<0>(v[i]);
+        unsigned int idx2=std::get<1>(v[i]);
         for(int j=idx1;j<=idx2;++j){
           processed[j]=true;
           datatypes.push_back(DataInterpretation::component_is_vector);
         }
-      
       }
+      // for(int i=0;i<v.size();++i){
+      //   std::tuple<unsigned int,unsigned int,
+      //   std::string,DataComponentInterpretation::DataComponentInterpretation> v_i=v[i];
+      //   unsigned int idx1=std::get<0>(v_i);
+      //   unsigned int idx2=std::get<1>(v_i);
+      //   std::string name=std::get<2>(v_i);
+      //   for(const auto &patch: this->get_patches()){
+      //     for(unsigned int k=0;k<patch.vertices.size();++k){
+      //       Point<3,double> vertex=patch.vertices[k];
+      //       for(unsigned int j=idx1;j<=idx2;++j){
+      //         data[j]=(patch.data(j,k));
+
+      //       }
+            
+      //       structured_data.splat(vertex,data,3);
+      //     }
+      //   }
+        
+      
+      // }
       for (const auto & patch: this->get_patches()){
         for(unsigned int k=0;k<patch.vertices.size();++k){ //8 vertices in 3d
           Point<3,double> vertex=patch.vertices[k];
-          std::vector<double> data;
+          std::vector<double> data; // not efficient change this
+          for(int i=0;i<num_components;++i){
+            data.push_back(0);
+          }
+          for(int i=0;i<v.size();++i){
+           unsigned int idx1=std::get<0>(v[i]);
+           unsigned int idx2=std::get<1>(v[i]);
+           for(unsigned int j=idx1;j<=idx2;++j){
+              data[j]=(patch.data(j,k));
+
+            }
+          }
           for(unsigned int i=0;i<patch.data.n_rows();++i){
             if(!processed[i]){
-              data.push_back(patch.data(i,k));
+              data[i]=(patch.data(i,k));
             }
           }
           structured_data.splat(vertex,data,3);
@@ -95,6 +112,13 @@ class MyReader: public DataOutReader<dim,dim>
         datatypes.push_back(DataInterpretation::component_is_scalar);
       }
       // std::cout<<"\n number of datatypes is "+std::to_string(datatypes.size());
+      
+      for(int i=0;i<sizeof(processed);++i){
+        if(processed[i]){
+          std::cout<<"tic \n";
+        }
+        
+      }
 
     return structured_data;
 
@@ -114,6 +138,15 @@ const Point<3,double> &p1,const Point<3,double> &p2,const std::array<unsigned in
   reader.read_whole_parallel_file(in);
   
   StructuredData s=reader.write_to_vertex(p1,p2,pts_dir);
+  std::vector<DataInterpretation> d=reader.datatypes;
+  for(int i=0;i<d.size();++i){
+    if(d[i]==DataInterpretation::component_is_vector){
+      std::cout<<"vector \n";
+    }
+    else if(d[i]==DataInterpretation::component_is_scalar){
+      std::cout<<"scalar \n";
+    }
+  }
   Table<4,double> T=s.data;
 
   s.to_vtk(T,p1,p2,outputName,reader.datatypes,reader.names);
