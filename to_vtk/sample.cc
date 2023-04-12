@@ -36,39 +36,76 @@
 
 using namespace dealii;
 
-
-template <int dim>
+template<int dim>
 class MyReader: public DataOutReader<dim,dim>
 {
-public:
-  StructuredData inspect(const Point<3,int> &min,const Point<3,int> &max,const std::array<unsigned int,3> &num_pts,const int &num_components)
-  {
-
-    StructuredData structured_data(min,max,num_pts,num_components);
-    for (const auto & patch: this->get_patches()){
-      for(unsigned int k=0;k<8;++k){ //8 vertices in 3d
-        Point<3,double> vertex=patch.vertices[k];
-        std::vector<double> data;
-        for(unsigned int i=0;i<patch.data.n_rows();++i){
-          data.push_back(patch.data(i,k));
-        }
-        structured_data.splat(vertex,data,3);
-
+  public:
+      std::vector<DataInterpretation> datatypes;
+      std::vector<std::string> names;
+    
+    StructuredData write_to_vertex(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_pts)
+    {
+      
+      std::vector v=this->get_nonscalar_data_ranges();
+      names=this->get_dataset_names();
+      unsigned int num_components=names.size();
+      std::cout<<"number of names is: "+std::to_string(names.size())+"\n";
+      StructuredData structured_data(min,max,num_pts,num_components);
+      bool processed[num_components];
+      for(int i=0;i<num_components;++i){
+        processed[i]=false;
       }
-    }
+      for(int i=0;i<v.size();++i){
+        std::tuple<unsigned int,unsigned int,
+        std::string,DataComponentInterpretation::DataComponentInterpretation> v_i=v[i];
+        unsigned int idx1=std::get<0>(v_i);
+        unsigned int idx2=std::get<1>(v_i);
+        std::string name=std::get<2>(v_i);
+        for(const auto &patch: this->get_patches()){
+          for(unsigned int k=0;k<patch.vertices.size();++k){
+            Point<3,double> vertex=patch.vertices[k];
+            std::vector<double> data;
+            for(unsigned int j=idx1;j<=idx2;++j){
+              data.push_back(patch.data(j,k));
+
+            }
+            structured_data.splat(vertex,data,3);
+          }
+        }
+        for(int j=idx1;j<=idx2;++j){
+          processed[j]=true;
+          datatypes.push_back(DataInterpretation::component_is_vector);
+        }
+      
+      }
+      for (const auto & patch: this->get_patches()){
+        for(unsigned int k=0;k<patch.vertices.size();++k){ //8 vertices in 3d
+          Point<3,double> vertex=patch.vertices[k];
+          std::vector<double> data;
+          for(unsigned int i=0;i<patch.data.n_rows();++i){
+            if(!processed[i]){
+              data.push_back(patch.data(i,k));
+            }
+          }
+          structured_data.splat(vertex,data,3);
+
+        }
+      }
+      for(int i=datatypes.size();i<num_components;++i){
+        datatypes.push_back(DataInterpretation::component_is_scalar);
+      }
+      // std::cout<<"\n number of datatypes is "+std::to_string(datatypes.size());
+
     return structured_data;
 
       
   }
 
-  // StructuredData structured_data;
 };
 
 void
-sample(const std::string &myFile,const std::string &outputName,
-const Point<3,int> &p1,const Point<3,int> &p2,const std::array<unsigned int,3> &pts_dir,
-unsigned int &num_components,const std::vector<DataInterpretation> &datatypes,
-const std::vector<std::string> &names)
+sample_structured(const std::string &myFile,const std::string &outputName,
+const Point<3,double> &p1,const Point<3,double> &p2,const std::array<unsigned int,3> &pts_dir)
 {
   // Read the data back in and dump it into the deallog:
   std::ifstream in(myFile);
@@ -76,32 +113,31 @@ const std::vector<std::string> &names)
   MyReader<3> reader;
   reader.read_whole_parallel_file(in);
   
-  StructuredData s=reader.inspect(p1,p2,pts_dir,num_components);
+  StructuredData s=reader.write_to_vertex(p1,p2,pts_dir);
   Table<4,double> T=s.data;
-  s.to_vtk(T,p1,p2,outputName,datatypes,names);
+
+  s.to_vtk(T,p1,p2,outputName,reader.datatypes,reader.names);
 
 
-  std::cout << "OK" << std::endl;
+  // std::cout << "OK" << std::endl;
 }
 
+// ./sample infile outfile minx max x miny maxy minz maxz nx ny nz
 int
 main(int argc, char *argv[])
 {
   // Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  
   AssertDimension(argc,12);
   std::string infile=argv[1];
   std::string outfile=argv[2];
   int a=std::stoi(argv[3]);
   std::cout<<infile;
   std::cout<<a;
-  Point<3,int> p1(std::stoi(argv[3]),std::stoi(argv[5]),std::stoi(argv[7]));
-  Point<3,int> p2(std::stoi(argv[4]),std::stoi(argv[6]),std::stoi(argv[8]));
+  Point<3,double> p1(std::stod(argv[3]),std::stod(argv[5]),std::stod(argv[7]));
+  Point<3,double> p2(std::stod(argv[4]),std::stod(argv[6]),std::stod(argv[8]));
   std::array<unsigned int,3> pts_dir{std::stoi(argv[9]),std::stoi(argv[10]),std::stoi(argv[11])};
-  
-  unsigned  int num_components=1;
-  const std::vector<DataInterpretation> d{DataInterpretation::component_is_scalar};
-  const std::vector<std::string> names{"mu"};
-  sample(infile,outfile,p1,p2,pts_dir,num_components,d,names);
+  sample_structured(infile,outfile,p1,p2,pts_dir);
   
   return 0;
 }

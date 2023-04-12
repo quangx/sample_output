@@ -24,25 +24,19 @@ struct StructuredData{
     std::array<unsigned int,3> num_values;
 
 
-    StructuredData(const Point<3,int> &min,const Point<3,int> &max,const std::array<unsigned int,3> &num_values,const int num_components){
+    StructuredData(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_values,const int &num_components){
 
         this->min=min;
         this->max=max;
         this->num_values=num_values;
-        this->spacing=spacing;
         for(int i=0;i<3;++i){
           spacing[i]=(1.0*max[i]-1.0*min[i])/(1.0*num_values[i]-1);
-          // num_values[i]=max[i]+1;
         }
         TableIndices<4> t_ind(num_values[0],num_values[1],num_values[2],num_components);
         data.reinit(t_ind);
         priorities.reinit(num_values[0],num_values[1],num_values[2]);
 
-        // priorities(num_values[0],num_values[1],num_values[2]);
-        // TableIndices<3> p_size=priorities.size();
-        // for(int i=0;i<3;++i){
-        //   std::cout<<std::to_string(p_size[i])+" ";
-        // }
+        
     }
     std::array<unsigned int,3> location_to_index(const Point<3,double> &p){
       std::array<unsigned int,3> index;
@@ -65,7 +59,7 @@ struct StructuredData{
       }
       return location;
     }
-    void set_values(const std::array<unsigned int,3> &idx,             //unsure if this is best way to check closest
+    void set_values(const std::array<unsigned int,3> &idx,             
     double distance, std::vector<double> &values){
       if(1./(1e-20+distance)> priorities[idx[0]][idx[1]][idx[2]]){
         for(int i=0;i<values.size();++i){
@@ -79,12 +73,12 @@ struct StructuredData{
       //implement later
       std::array<unsigned int,3> result;
       for(unsigned int d=0;d<3;++d){
-        result[d]=5;
+        result[d]=20;
       }
       return result;
     }
-    void splat(const Point<3,double> &p,std::vector<double> &values,const double radius){   //todo: implement
-      const std::array<unsigned int,3> idx=location_to_index(p); //continue if idx
+    void splat(const Point<3,double> &p,std::vector<double> &values,const double radius){   
+      const std::array<unsigned int,3> idx=location_to_index(p); 
       std::array<unsigned int,3> extent=approximate_extent(p,radius);
       for(unsigned int iz=0;iz<2*extent[2];++iz){
         for(unsigned int iy=0;iy<2*extent[1];++iy){
@@ -111,8 +105,8 @@ struct StructuredData{
 
     }
   }
-    void to_vtk(Table<4,double> &t,const Point<3,int> min,
-    const Point<3,int> max,const std::string filename,
+    void to_vtk(Table<4,double> &t,const Point<3,double> min,
+    const Point<3,double> max,const std::string filename,
     std::vector<DataInterpretation> component_type,const std::vector<std::string> names){
         int n1;
         int n2;
