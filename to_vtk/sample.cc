@@ -46,6 +46,7 @@ class MyReader: public DataOutReader<dim,dim>
     StructuredData write_to_vertex(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_pts)
     {
       
+
       std::vector v=this->get_nonscalar_data_ranges();
       names=this->get_dataset_names();
       unsigned int num_components=names.size();
@@ -55,19 +56,19 @@ class MyReader: public DataOutReader<dim,dim>
       
       for(int i=0;i<num_components;++i){
         processed[i]=false;
-      }//need to sort names
-      int count=0;
+      }
+      
       for(int i=0;i<v.size();++i){   //mark indices as processed
         unsigned int idx1=std::get<0>(v[i]);
         unsigned int idx2=std::get<1>(v[i]);
         for(int j=idx1;j<=idx2;++j){
-          std::string temp=names[count];
-          names[count]=names[j];
-          names[j]=temp;
           processed[j]=true;
           datatypes.push_back(DataInterpretation::component_is_vector);
-          ++count;
+          
         }
+      }
+      for(int i=0;i<names.size();++i){
+        std::cout<<names[i]+"\n";
       }
       // for(int i=0;i<v.size();++i){
       //   std::tuple<unsigned int,unsigned int,
@@ -114,14 +115,26 @@ class MyReader: public DataOutReader<dim,dim>
       for(int i=datatypes.size();i<num_components;++i){
         datatypes.push_back(DataInterpretation::component_is_scalar);
       }
+      std::vector<std::string> temp_name;
+      for(int i=0;i<num_components;++i){
+        if(processed[i]){
+          temp_name.push_back(names[i]);
+        }
+      }
+      for(int i=0;i<num_components;++i){
+        if(!processed[i]){
+          temp_name.push_back(names[i]);
+        }
+      }
+      for(int i=0;i<temp_name.size();++i){
+        names[i]=temp_name[i];
+      }
+
+
+      
       // std::cout<<"\n number of datatypes is "+std::to_string(datatypes.size());
       
-      for(int i=0;i<sizeof(processed);++i){
-        if(processed[i]){
-          std::cout<<"tic \n";
-        }
-        
-      }
+     
 
     return structured_data;
 
@@ -142,14 +155,7 @@ const Point<3,double> &p1,const Point<3,double> &p2,const std::array<unsigned in
   
   StructuredData s=reader.write_to_vertex(p1,p2,pts_dir);
   std::vector<DataInterpretation> d=reader.datatypes;
-  for(int i=0;i<d.size();++i){
-    if(d[i]==DataInterpretation::component_is_vector){
-      std::cout<<"vector \n";
-    }
-    else if(d[i]==DataInterpretation::component_is_scalar){
-      std::cout<<"scalar \n";
-    }
-  }
+
   Table<4,double> T=s.data;
 
   s.to_vtk(T,p1,p2,outputName,reader.datatypes,reader.names);
