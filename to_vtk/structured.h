@@ -73,7 +73,7 @@ struct StructuredData{
       //implement later
       std::array<unsigned int,3> result;
       for(unsigned int d=0;d<3;++d){
-        result[d]=20;
+        result[d]=5;
       }
       return result;
     }
@@ -126,6 +126,9 @@ struct StructuredData{
         
         std::ofstream file;
         file.open(filename);
+        file.precision(8);
+        file<<std::scientific;
+
         file<<"<VTKFile type=\"ImageData\" "
         "byte_order=\"LittleEndian\" header_type=\"UInt64\"> \n \t"
         "<ImageData WholeExtent=\""+std::to_string(0)+" "+std::to_string(n1-1)+""
@@ -147,7 +150,7 @@ struct StructuredData{
                 for(int y=0;y<n2;++y){
                 for(int x=0;x<n1;++x){
                     for(int j=0;j<3;++j){
-                    file<<std::to_string(t[x][y][z][i+j])+" ";
+                    file<<t[x][y][z][i+j]<<" ";
                     }
                     file<<"\n\t";
                 }
@@ -162,7 +165,7 @@ struct StructuredData{
                 file<<"\t";
                 for(int y=0;y<n2;++y){
                 for(int x=0;x<n1;++x){
-                    file<<std::to_string(t[x][y][z][i])+" ";
+                    file<<t[x][y][z][i]<<" ";
                 }
                 file<<"\n\t";
                 }

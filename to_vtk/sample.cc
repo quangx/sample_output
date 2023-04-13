@@ -54,22 +54,20 @@ class MyReader: public DataOutReader<dim,dim>
       bool processed[num_components];
       
       
-      for(int i=0;i<num_components;++i){
+      for(unsigned int i=0;i<num_components;++i){
         processed[i]=false;
       }
       
-      for(int i=0;i<v.size();++i){   //mark indices as processed
+      for(unsigned int i=0;i<v.size();++i){   //mark indices as processed
         unsigned int idx1=std::get<0>(v[i]);
         unsigned int idx2=std::get<1>(v[i]);
-        for(int j=idx1;j<=idx2;++j){
+        for(unsigned int j=idx1;j<=idx2;++j){
           processed[j]=true;
           datatypes.push_back(DataInterpretation::component_is_vector);
           
         }
       }
-      for(int i=0;i<names.size();++i){
-        std::cout<<names[i]+"\n";
-      }
+      
       // for(int i=0;i<v.size();++i){
       //   std::tuple<unsigned int,unsigned int,
       //   std::string,DataComponentInterpretation::DataComponentInterpretation> v_i=v[i];
@@ -95,7 +93,7 @@ class MyReader: public DataOutReader<dim,dim>
           Point<3,double> vertex=patch.vertices[k];
           std::vector<double> data;
           
-          for(int i=0;i<v.size();++i){
+          for(unsigned int i=0;i<v.size();++i){
            unsigned int idx1=std::get<0>(v[i]);
            unsigned int idx2=std::get<1>(v[i]);
            for(unsigned int j=idx1;j<=idx2;++j){
@@ -106,32 +104,34 @@ class MyReader: public DataOutReader<dim,dim>
           for(unsigned int i=0;i<patch.data.n_rows();++i){
             if(!processed[i]){
               data.push_back(patch.data(i,k));
+             
             }
           }
           structured_data.splat(vertex,data,3);
 
         }
+
       }
-      for(int i=datatypes.size();i<num_components;++i){
+      for(unsigned int i=datatypes.size();i<num_components;++i){
         datatypes.push_back(DataInterpretation::component_is_scalar);
       }
       std::vector<std::string> temp_name;
-      for(int i=0;i<num_components;++i){
+      for(unsigned int i=0;i<num_components;++i){
         if(processed[i]){
           temp_name.push_back(names[i]);
         }
       }
-      for(int i=0;i<num_components;++i){
+      for(unsigned int i=0;i<num_components;++i){
         if(!processed[i]){
           temp_name.push_back(names[i]);
         }
       }
-      for(int i=0;i<temp_name.size();++i){
+      for(unsigned int i=0;i<temp_name.size();++i){
         names[i]=temp_name[i];
       }
-
-
       
+
+
       // std::cout<<"\n number of datatypes is "+std::to_string(datatypes.size());
       
      
