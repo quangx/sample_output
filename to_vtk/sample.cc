@@ -42,6 +42,34 @@ class MyReader: public DataOutReader<dim,dim>
   public:
       std::vector<DataInterpretation> datatypes;
       std::vector<std::string> names;
+    
+
+    std::array<Point<3,double>,3> approx_bounds(){
+      
+      std::array<double,3> min{1./1e-60,1./1e-60,1./1e-60};
+      
+      std::array<double,3> max{-1e60,-1e60,-1e60};
+      for(const auto & patch: this ->get_patches()){
+        for(unsigned int k=0;k<patch.vertices.size();++k){
+          Point<3,double> vertex=patch.vertices[k];
+          for(int j=0;j<3;++j){
+            if(vertex[j]<min[j]){
+              min[j]=vertex[j];
+              
+            }
+            if(vertex[j]>max[j]){
+              max[j]=vertex[j];
+            }
+          }
+        }
+        
+      }
+      Point<3,double> min_point(min[0],min[1],min[2]);
+      Point<3,double> max_point(max[0],max[1],max[2]);
+      std::array<Point<3,double>,3> bounds{min_point,max_point};
+      return bounds;
+
+    }
       
     StructuredData write_to_vertex(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_pts)
     {
@@ -169,17 +197,37 @@ int
 main(int argc, char *argv[])
 {
   // Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  
-  AssertDimension(argc,12);
-  std::string infile=argv[1];
-  std::string outfile=argv[2];
-  int a=std::stoi(argv[3]);
-  std::cout<<infile;
-  std::cout<<a;
-  Point<3,double> p1(std::stod(argv[3]),std::stod(argv[5]),std::stod(argv[7]));
-  Point<3,double> p2(std::stod(argv[4]),std::stod(argv[6]),std::stod(argv[8]));
-  std::array<unsigned int,3> pts_dir{std::stoi(argv[9]),std::stoi(argv[10]),std::stoi(argv[11])};
-  sample_structured(infile,outfile,p1,p2,pts_dir);
+  bool flag=argv[1];
+  if(flag){
+    if(argc!=13){
+      
+      std::cout<<"not enough arguments"<<argc;
+    }
+    else{
+      std::string infile=argv[2];
+      std::string outfile=argv[3];
+      Point<3,double> p1(std::stod(argv[4]),std::stod(argv[6]),std::stod(argv[8]));
+      Point<3,double> p2(std::stod(argv[5]),std::stod(argv[7]),std::stod(argv[9]));
+      std::array<unsigned int,3> pts_dir{std::stoi(argv[10]),std::stoi(argv[11]),std::stoi(argv[12])};
+      sample_structured(infile,outfile,p1,p2,pts_dir);
+    }
+  }
+  else{
+    if(argc!=7){
+      std::cout<<"not enough arguments";
+    }
+    else{
+      std::string infile=argv[2];
+      std::string outfile=argv[3];
+      MyReader<3> reader;
+      std::ifstream in(infile);
+      reader.read_whole_parallel_file(in);
+      std::array<Point<3,double>,3> bounds=reader.approx_bounds();
+      std::array<unsigned int,3> pts_dir{std::stoi(argv[4]),std::stoi(argv[5]),std::stoi(argv[6])};
+      sample_structured(infile,outfile,bounds[0],bounds[1],pts_dir);
+    }
+
+  }
   
   return 0;
 }
