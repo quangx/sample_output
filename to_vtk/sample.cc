@@ -197,7 +197,8 @@ int
 main(int argc, char *argv[])
 {
   // Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
-  bool flag=argv[1];
+  bool flag=std::stoi(argv[1])==1;
+  
   if(flag){
     if(argc!=13){
       
