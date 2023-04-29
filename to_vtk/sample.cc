@@ -44,7 +44,7 @@ class MyReader: public DataOutReader<dim,dim>
       std::vector<std::string> names;
     
 
-    std::array<Point<3,double>,3> approx_bounds(){
+    std::array<Point<3,double>,2> approx_bounds(){
       
       std::array<double,3> min{1./1e-60,1./1e-60,1./1e-60};
       
@@ -66,9 +66,14 @@ class MyReader: public DataOutReader<dim,dim>
       }
       Point<3,double> min_point(min[0],min[1],min[2]);
       Point<3,double> max_point(max[0],max[1],max[2]);
-      std::array<Point<3,double>,3> bounds{min_point,max_point};
+      std::array<Point<3,double>,2> bounds{min_point,max_point};
       return bounds;
 
+    }
+    
+    std::vector<std::string> get_names(){
+      names=this->get_dataset_names();
+      return names;
     }
       
     StructuredData write_to_vertex(const Point<3,double> &min,const Point<3,double> &max,const std::array<unsigned int,3> &num_pts)
@@ -198,12 +203,36 @@ int
 main(int argc, char *argv[])
 {
   // Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+  if(argc==2){
+    std::string infile=argv[1];
+    MyReader<3> reader;
+    std::ifstream in(infile);
+    reader.read_whole_parallel_file(in);
+    std::vector<std::string> names=reader.get_names();
+    std::array<Point<3,double>,2> bounds=reader.approx_bounds();
+    Point<3,double> min=bounds[0];
+    Point<3,double> max=bounds[1];
+    std::cout<<"min_x = "<<min[0]<<" max_x = "<<max[0]<<"\n";
+    std::cout<<"min_y = "<<min[1]<<" max_y = "<<max[1]<<"\n";
+    std::cout<<"min_z = "<<min[2]<<" max_z = "<<max[2]<<"\n";
+
+
+    std::cout<<names.size()<< " components with following names:\n";
+    for(unsigned int i=0;i<names.size();++i){
+      std::cout<<names[i]<<"\n";
+      
+    }
+
+    
+
+    return 0;
+  }
   bool flag=std::stoi(argv[1])==1;
-  
+
   if(flag){   // ./sample 1 infile outfile minx max x miny maxy minz maxz nx ny nz
     if(argc!=13){
       
-      std::cout<<"not enough arguments"<<argc;
+      std::cout<<"unacceptable number of arguments"<<argc;
     }
     else{
       std::string infile=argv[2];
@@ -225,7 +254,8 @@ main(int argc, char *argv[])
       MyReader<3> reader;
       std::ifstream in(infile);
       reader.read_whole_parallel_file(in);
-      std::array<Point<3,double>,3> bounds=reader.approx_bounds();
+      std::array<Point<3,double>,2> bounds=reader.approx_bounds();
+      
       std::array<unsigned int,3> pts_dir{(unsigned int)std::stoi(argv[4]),(unsigned int)std::stoi(argv[5]),(unsigned int)std::stoi(argv[6])};
       sample_structured(infile,outfile,bounds[0],bounds[1],pts_dir);
     }
