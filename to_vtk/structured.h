@@ -59,10 +59,11 @@ struct StructuredData{
       }
       return location;
     }
+    
     void set_values(const std::array<unsigned int,3> &idx,             
     double distance, std::vector<double> &values){
       if(1./(1e-20+distance)> priorities[idx[0]][idx[1]][idx[2]]){
-        for(int i=0;i<values.size();++i){
+        for(unsigned int i=0;i<values.size();++i){
           data[idx[0]][idx[1]][idx[2]][i]=values[i];
         }
         priorities[idx[0]][idx[1]][idx[2]]=1./(1e-20+distance);
@@ -81,18 +82,24 @@ struct StructuredData{
       const std::array<unsigned int,3> idx=location_to_index(p); 
       std::array<unsigned int,3> extent=approximate_extent(p,radius);
       for(unsigned int iz=0;iz<2*extent[2];++iz){
+        if(idx[2]+iz<extent[2]){
+          continue;
+        }
         for(unsigned int iy=0;iy<2*extent[1];++iy){
+          if(idx[1]+iy<extent[1]){
+            continue;
+          }
           for(unsigned int ix=0;ix<2*extent[0];++ix){
+            if(idx[0]+ix<extent[0]){
+              continue;
+            }
             std::array<unsigned int,3> current_index;
             current_index[0] = std::max(0l,static_cast<long>(idx[0] + ix) - static_cast<long>(extent[0]));
             current_index[1] = std::max(0l,static_cast<long>(idx[1] + iy) - static_cast<long>(extent[1]));
             current_index[2] = std::max(0l,static_cast<long>(idx[2] + iz) - static_cast<long>(extent[2]));
             if(current_index[0]>=num_values[0]||
             current_index[1]>=num_values[1] ||
-            current_index[2]>=num_values[2] ||
-            idx[0]+ix<extent[0] ||
-            idx[1]+iy<extent[1]||
-            idx[2]+iz<extent[2]
+            current_index[2]>=num_values[2] 
             ){
               continue;
             }
